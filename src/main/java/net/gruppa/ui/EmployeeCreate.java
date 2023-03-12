@@ -1,6 +1,7 @@
 package net.gruppa.ui;
 
-import net.gruppa.entity.Adresse;
+import net.gruppa.entity.Address;
+import net.gruppa.main.CustomerHandler;
 import net.gruppa.main.DataHandler;
 import net.gruppa.main.UIHandler;
 import net.gruppa.entity.Person;
@@ -9,17 +10,18 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class CreateEmployee extends JPanel {
+public class EmployeeCreate extends JPanel {
 
     private final UIHandler uiHandler;
     private final DataHandler dataHandler;
-
+    private final CustomerHandler customerHandler;
     private Person employee;
-    private Adresse adresse;
+    private Address address;
 
-    public CreateEmployee(UIHandler uiHandler, DataHandler dataHandler) {
-        this.dataHandler = dataHandler;
+    public EmployeeCreate(UIHandler uiHandler, DataHandler dataHandler, CustomerHandler customerHandler) {
         this.uiHandler = uiHandler;
+        this.dataHandler = dataHandler;
+        this.customerHandler = customerHandler;
         setup();
     }
 
@@ -111,20 +113,32 @@ public class CreateEmployee extends JPanel {
         createEmployeeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                adresse = new Adresse(streetField.getText(), Integer.parseInt(houseNumberField.getText()),
+                if (firstnameField.getText().equals("") || lastnameField.getText().equals("") || emailField.getText().equals("") || usernameField.getText().equals("") ||
+                        passwordField.getText().equals("") || streetField.getText().equals("") || houseNumberField.getText().equals("") ||
+                        postCodeField.getText().equals("") || cityField.getText().equals("")) {
+                    JOptionPane.showMessageDialog(null, "Bitte f\u00fcllen Sie alle Felder aus!");
+                    return;
+                } else if (isNotNumeric(houseNumberField.getText())) {
+                    JOptionPane.showMessageDialog(null, "Hausnummer muss eine Zahl sein!");
+                    return;
+                } else if (isNotNumeric(postCodeField.getText())) {
+                    JOptionPane.showMessageDialog(null, "Postleitzahl darf nur aus Zahlen bestehen!");
+                    return;
+                }
+
+                address = new Address(streetField.getText(), Integer.parseInt(houseNumberField.getText()),
                         Integer.parseInt(postCodeField.getText()), cityField.getText());
                 employee = new Person(dataHandler.getSavedPerson().getPersonList().size(), usernameField.getText(), firstnameField.getText(),
-                        lastnameField.getText(), passwordField.getText(), emailField.getText(), adresse);
+                        lastnameField.getText(), passwordField.getText(), emailField.getText(), address);
                 dataHandler.createPerson(employee);
                 destruct();
                 startEmployeeOverview();
             }
         });
-        add(createEmployeeButton);
 
         // Go Back Button
-        goBackButton = new JButton("Zur\u00fcck");
-        goBackButton.setBounds(250, 360, 80, 25);
+        goBackButton = new JButton("Abbrechen");
+        goBackButton.setBounds(240, 360, 100, 25);
         goBackButton.setForeground(Color.WHITE);
         goBackButton.setBackground(Color.DARK_GRAY);
         goBackButton.addActionListener(new ActionListener() {
@@ -134,12 +148,22 @@ public class CreateEmployee extends JPanel {
                 startEmployeeOverview();
             }
         });
-        add(goBackButton);
 
         // Frame Settings
         add(userInfoPanel);
         add(userAddressPanel);
+        add(createEmployeeButton);
+        add(goBackButton);
         setVisible(true);
+    }
+
+    private boolean isNotNumeric(String value) {
+        try {
+            Double.parseDouble(value);
+            return false;
+        } catch (Exception ex) {
+            return true;
+        }
     }
 
     private void destruct() {
@@ -147,7 +171,7 @@ public class CreateEmployee extends JPanel {
     }
 
     private void startEmployeeOverview() {
-        uiHandler.registerPanel(new Dashboard(uiHandler, dataHandler, 1));
+        uiHandler.registerPanel(new Dashboard(uiHandler, dataHandler, customerHandler, 1));
         uiHandler.startWindow();
     }
 }
